@@ -86,7 +86,6 @@ export default function CreateEventPage() {
       thumbnail: String(formData.get("thumbnail") || "").trim(),
       location: String(formData.get("location") || "").trim(),
       date: new Date(date).toISOString(),
-      creatorEmail: session.user.email,
     };
 
     if (
@@ -102,10 +101,22 @@ export default function CreateEventPage() {
     try {
       setLoading(true);
 
+      // Get JWT token from Better Auth
+      const { data: tokenData, error: tokenError } =
+        await authClient.token();
+
+      if (tokenError || !tokenData?.token) {
+        throw new Error(
+          "Authentication token not found. Please login again."
+        );
+      }
+
+      // Send event data with JWT token
       const response = await fetch(`${API_URL}/events`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenData.token}`,
         },
         body: JSON.stringify(eventData),
       });

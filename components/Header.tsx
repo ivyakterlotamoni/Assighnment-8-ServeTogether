@@ -1,8 +1,21 @@
 
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, Leaf, Menu } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, Leaf, Menu, LogOut } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 export default function Header() {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-[#173F32]/10 bg-[#F8F8F0]/95 backdrop-blur-md">
       <nav className="mx-auto flex max-w-[1400px] items-center justify-between px-5 py-3 md:px-10">
@@ -28,15 +41,32 @@ export default function Header() {
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
-          <Link href="/login" className="text-sm font-semibold hover:text-[#D18B42]">
-            Login
-          </Link>
-          <Link
-            href="/register"
-            className="flex items-center gap-2 rounded-lg bg-[#174D38] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#103B2A]"
-          >
-            Join Us <ArrowRight size={15} />
-          </Link>
+          {isPending ? null : session?.user ? (
+            <>
+              <span className="text-sm font-medium text-[#52645B]">
+                {session.user.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+              >
+                <LogOut size={15} />
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-semibold hover:text-[#D18B42]">
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="flex items-center gap-2 rounded-lg bg-[#174D38] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#103B2A]"
+              >
+                Join Us <ArrowRight size={15} />
+              </Link>
+            </>
+          )}
         </div>
 
         <Link
