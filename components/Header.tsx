@@ -28,10 +28,7 @@ export default function Header() {
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
-          <Link
-            href="/login"
-            className="text-sm font-semibold hover:text-[#D18B42]"
-          >
+          <Link href="/login" className="text-sm font-semibold hover:text-[#D18B42]">
             Login
           </Link>
           <Link
@@ -42,12 +39,13 @@ export default function Header() {
           </Link>
         </div>
 
-        <button
+        <Link
+          href="/events"
           className="rounded-lg border border-[#174D38]/20 p-2 md:hidden"
           aria-label="Open navigation menu"
         >
           <Menu size={22} />
-        </button>
+        </Link>
       </nav>
     </header>
   );
