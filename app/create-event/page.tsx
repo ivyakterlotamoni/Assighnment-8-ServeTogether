@@ -1,8 +1,10 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,39 +30,72 @@ const API_URL =
 export default function CreateEventPage() {
   const router = useRouter();
 
+  const { data: session, isPending } = authClient.useSession();
+
   const [eventType, setEventType] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.replace("/login");
+    }
+  }, [session, isPending, router]);
 
   const today = new Date();
+
   const minDate = [
     today.getFullYear(),
     String(today.getMonth() + 1).padStart(2, "0"),
     String(today.getDate()).padStart(2, "0"),
   ].join("-");
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+    if (!session?.user?.email) {
+      setError("Please login before creating an event.");
+      return;
+    }
+
+    if (!eventType) {
+      setError("Please select an event type.");
+      return;
+    }
 
     const form = e.currentTarget;
     const formData = new FormData(form);
 
-    const eventData = {
-      title: formData.get("title"),
-      description: formData.get("description"),
-      eventType,
-      thumbnail: formData.get("thumbnail"),
-      location: formData.get("location"),
-      date: formData.get("date"),
-      creatorEmail: formData.get("creatorEmail"),
-    };
+    const date = String(formData.get("date") || "");
 
-    if (!eventType) {
-      alert("Please select an event type.");
+    if (!date || new Date(date).getTime() <= Date.now()) {
+      setError("Please select a future date and time.");
       return;
     }
 
-    if (new Date(eventData.date as string) <= new Date()) {
-      alert("Please select a future date.");
+    const eventData = {
+      title: String(formData.get("title") || "").trim(),
+      description: String(formData.get("description") || "").trim(),
+      eventType,
+      thumbnail: String(formData.get("thumbnail") || "").trim(),
+      location: String(formData.get("location") || "").trim(),
+      date: new Date(date).toISOString(),
+      creatorEmail: session.user.email,
+    };
+
+    if (
+      !eventData.title ||
+      !eventData.description ||
+      !eventData.thumbnail ||
+      !eventData.location
+    ) {
+      setError("Please fill in all required fields.");
       return;
     }
 
@@ -78,24 +113,40 @@ export default function CreateEventPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "Failed to create event");
+        throw new Error(result.message || "Failed to create event.");
       }
 
-      alert("Event created successfully!");
+      setSuccess("Event created successfully!");
+
       form.reset();
       setEventType("");
-      router.push("/upcoming-events");
-    } catch (error) {
-      console.error(error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong!"
+
+      setTimeout(() => {
+        router.push("/upcoming-events");
+        router.refresh();
+      }, 1200);
+    } catch (err) {
+      console.error("Create event error:", err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again."
       );
     } finally {
       setLoading(false);
     }
   };
+
+  if (isPending || !session) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f8f8ef]">
+        <p className="text-[#174b3b] font-medium">
+          Checking your account...
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#f8f8ef] px-4 py-12">
@@ -119,6 +170,7 @@ export default function CreateEventPage() {
             <CardTitle className="text-xl text-[#123f32]">
               Event Information
             </CardTitle>
+
             <CardDescription>
               Fill in the details below to create your community event.
             </CardDescription>
@@ -128,6 +180,7 @@ export default function CreateEventPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="title">Event Title</Label>
+
                 <Input
                   id="title"
                   name="title"
@@ -140,14 +193,15 @@ export default function CreateEventPage() {
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="eventType">Event Type</Label>
-                 <Select
-                 value={eventType}
-                onValueChange={(value) => setEventType(value ?? "")}
-               required
-                >
+
+                  <Select
+                    value={eventType}
+                    onValueChange={(value) => setEventType(value ?? "")}
+                  >
                     <SelectTrigger id="eventType" className="h-11 w-full">
                       <SelectValue placeholder="Select event type" />
                     </SelectTrigger>
+
                     <SelectContent>
                       <SelectItem value="Cleanup">Cleanup</SelectItem>
                       <SelectItem value="Plantation">Plantation</SelectItem>
@@ -162,6 +216,7 @@ export default function CreateEventPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="location">Event Location</Label>
+
                   <Input
                     id="location"
                     name="location"
@@ -175,6 +230,7 @@ export default function CreateEventPage() {
               <div className="grid gap-5 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="date">Event Date</Label>
+
                   <Input
                     id="date"
                     name="date"
@@ -186,20 +242,23 @@ export default function CreateEventPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="creatorEmail">Creator Email</Label>
+                  <Label>Creator Email</Label>
+
                   <Input
-                    id="creatorEmail"
-                    name="creatorEmail"
-                    type="email"
-                    placeholder="your@email.com"
-                    required
-                    className="h-11"
+                    value={session.user.email}
+                    readOnly
+                    className="h-11 bg-gray-50 text-gray-600"
                   />
+
+                  <p className="text-xs text-gray-400">
+                    Your logged-in email is added automatically.
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="thumbnail">Event Image URL</Label>
+
                 <Input
                   id="thumbnail"
                   name="thumbnail"
@@ -212,6 +271,7 @@ export default function CreateEventPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="description">Event Description</Label>
+
                 <Textarea
                   id="description"
                   name="description"
@@ -221,11 +281,30 @@ export default function CreateEventPage() {
                 />
               </div>
 
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+                >
+                  {error}
+                </div>
+              )}
+
+              {success && (
+                <div
+                  role="status"
+                  className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"
+                >
+                  {success}
+                </div>
+              )}
+
               <div className="flex flex-col-reverse gap-3 border-t border-[#edf0e8] pt-6 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.back()}
+                  disabled={loading}
                   className="border-[#174b3b] text-[#174b3b] hover:bg-[#edf4ee]"
                 >
                   Cancel
