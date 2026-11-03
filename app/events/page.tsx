@@ -2,144 +2,105 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   MapPin,
   CalendarDays,
-  Clock,
   ArrowRight,
   Users,
   Heart,
-  Leaf,
-  BookOpen,
-  Stethoscope,
-  Droplets,
   HandHeart,
   Plus,
   Filter,
 } from "lucide-react";
 
 type Event = {
-  id: number;
+  _id: string;
   title: string;
-  category: string;
-  date: string;
-  time: string;
-  location: string;
   description: string;
-  volunteers: number;
-  icon: string;
-  color: string;
+  eventType: string;
+  thumbnail: string;
+  location: string;
+  date: string;
+  creatorEmail: string;
 };
-
-const events: Event[] = [
-  {
-    id: 1,
-    title: "Community Tree Plantation",
-    category: "Environment",
-    date: "November 7, 2026",
-    time: "9:00 AM - 12:00 PM",
-    location: "Dhaka, Bangladesh",
-    description:
-      "Join us to plant trees and make our community greener and healthier.",
-    volunteers: 35,
-    icon: "🌱",
-    color: "bg-green-100",
-  },
-  {
-    id: 2,
-    title: "Free Education for Children",
-    category: "Education",
-    date: "November 12, 2026",
-    time: "10:00 AM - 1:00 PM",
-    location: "Mirpur, Dhaka",
-    description:
-      "Help underprivileged children learn essential skills and build a brighter future.",
-    volunteers: 20,
-    icon: "📚",
-    color: "bg-blue-100",
-  },
-  {
-    id: 3,
-    title: "Free Medical Camp",
-    category: "Healthcare",
-    date: "November 15, 2026",
-    time: "8:00 AM - 2:00 PM",
-    location: "Uttara, Dhaka",
-    description:
-      "Support free health checkups and basic medical services for local residents.",
-    volunteers: 45,
-    icon: "🩺",
-    color: "bg-red-100",
-  },
-  {
-    id: 4,
-    title: "Clean Our Neighborhood",
-    category: "Environment",
-    date: "November 20, 2026",
-    time: "7:30 AM - 11:00 AM",
-    location: "Dhanmondi, Dhaka",
-    description:
-      "Let's work together to clean public spaces and create a healthier environment.",
-    volunteers: 28,
-    icon: "🌍",
-    color: "bg-emerald-100",
-  },
-  {
-    id: 5,
-    title: "Food Distribution Drive",
-    category: "Community",
-    date: "November 25, 2026",
-    time: "11:00 AM - 3:00 PM",
-    location: "Old Dhaka, Bangladesh",
-    description:
-      "Help distribute food packages to families who need support.",
-    volunteers: 50,
-    icon: "❤️",
-    color: "bg-orange-100",
-  },
-  {
-    id: 6,
-    title: "Clean Water Awareness",
-    category: "Community",
-    date: "November 29, 2026",
-    time: "9:00 AM - 12:00 PM",
-    location: "Gazipur, Bangladesh",
-    description:
-      "Spread awareness about safe drinking water and healthy sanitation.",
-    volunteers: 18,
-    icon: "💧",
-    color: "bg-cyan-100",
-  },
-];
 
 const categories = [
   "All Events",
-  "Environment",
+  "Cleanup",
+  "Plantation",
+  "Donation",
   "Education",
   "Healthcare",
   "Community",
 ];
 
+const categoryColors: Record<string, string> = {
+  Cleanup: "bg-emerald-100",
+  Plantation: "bg-green-100",
+  Donation: "bg-orange-100",
+  Education: "bg-blue-100",
+  Healthcare: "bg-red-100",
+  Community: "bg-cyan-100",
+};
+
 export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>([]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Events");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await fetch("http://localhost:8000/events", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load events");
+        }
+
+        const data: Event[] = await response.json();
+
+        const upcomingEvents = data
+          .filter((event) => new Date(event.date).getTime() > Date.now())
+          .sort(
+            (a, b) =>
+              new Date(a.date).getTime() - new Date(b.date).getTime()
+          );
+
+        setEvents(upcomingEvents);
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load events. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const matchesSearch =
         event.title.toLowerCase().includes(search.toLowerCase()) ||
         event.location.toLowerCase().includes(search.toLowerCase()) ||
-        event.category.toLowerCase().includes(search.toLowerCase());
+        event.eventType.toLowerCase().includes(search.toLowerCase());
 
       const matchesCategory =
         activeCategory === "All Events" ||
-        event.category === activeCategory;
+        event.eventType.toLowerCase() === activeCategory.toLowerCase();
 
       return matchesSearch && matchesCategory;
     });
-  }, [search, activeCategory]);
+  }, [events, search, activeCategory]);
 
   return (
     <main className="min-h-screen bg-[#F8F8F0] text-[#174D38]">
@@ -156,16 +117,13 @@ export default function EventsPage() {
               <h1 className="text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
                 Discover Events.
                 <br />
-                <span className="text-[#5A966D]">
-                  Create Impact.
-                </span>
+                <span className="text-[#5A966D]">Create Impact.</span>
               </h1>
 
               <p className="mt-6 max-w-xl text-base leading-8 text-gray-600 md:text-lg">
                 Find meaningful volunteer opportunities, connect
                 with your community, and be part of something
-                bigger. Every small action creates a positive
-                change.
+                bigger. Every small action creates a positive change.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
@@ -189,12 +147,8 @@ export default function EventsPage() {
 
             <div className="relative flex min-h-[280px] items-center justify-center rounded-3xl bg-[#E4EDDF] p-8 md:min-h-[380px]">
               <div className="text-center">
-                <div className="text-8xl md:text-9xl">
-                  🤝
-                </div>
-                <h2 className="mt-5 text-2xl font-bold">
-                  Together We Can
-                </h2>
+                <div className="text-8xl md:text-9xl">🤝</div>
+                <h2 className="mt-5 text-2xl font-bold">Together We Can</h2>
                 <p className="mt-2 text-gray-600">
                   Small actions, big changes.
                 </p>
@@ -216,9 +170,14 @@ export default function EventsPage() {
       <section className="px-5 pb-12 md:px-10">
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { number: "06", label: "Upcoming Events" },
-            { number: "196+", label: "Volunteer Spots" },
-            { number: "04", label: "Categories" },
+            { number: String(events.length).padStart(2, "0"), label: "Upcoming Events" },
+            {
+              number: String(
+                events.reduce((total) => total + 1, 0)
+              ),
+              label: "Available Events",
+            },
+            { number: "06+", label: "Event Opportunities" },
             { number: "01", label: "Shared Mission" },
           ].map((item) => (
             <div
@@ -228,9 +187,7 @@ export default function EventsPage() {
               <h3 className="text-3xl font-extrabold text-[#174D38]">
                 {item.number}
               </h3>
-              <p className="mt-2 text-sm text-gray-500">
-                {item.label}
-              </p>
+              <p className="mt-2 text-sm text-gray-500">{item.label}</p>
             </div>
           ))}
         </div>
@@ -247,11 +204,9 @@ export default function EventsPage() {
               <span className="text-sm font-bold uppercase tracking-widest text-[#5A966D]">
                 Get Involved
               </span>
-
               <h2 className="mt-2 text-3xl font-extrabold md:text-4xl">
                 Upcoming Events
               </h2>
-
               <p className="mt-3 text-gray-600">
                 Find an opportunity and make a difference.
               </p>
@@ -266,7 +221,6 @@ export default function EventsPage() {
           <div className="mb-6 rounded-2xl border border-green-100 bg-white p-3 shadow-sm">
             <div className="flex items-center gap-3 px-3">
               <Search className="shrink-0 text-gray-400" size={22} />
-
               <input
                 type="text"
                 placeholder="Search by event name, category or location..."
@@ -299,23 +253,40 @@ export default function EventsPage() {
             ))}
           </div>
 
-          {/* Event Cards */}
-          {filteredEvents.length > 0 ? (
+          {/* Loading */}
+          {loading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="h-96 animate-pulse rounded-2xl bg-white shadow-sm"
+                />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl bg-white px-5 py-16 text-center">
+              <p className="font-semibold text-red-600">{error}</p>
+            </div>
+          ) : filteredEvents.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredEvents.map((event) => (
                 <article
-                  key={event.id}
+                  key={event._id}
                   className="group flex flex-col overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                   <div
-                    className={`${event.color} relative flex h-44 items-center justify-center`}
+                    className={`relative flex h-52 items-center justify-center ${
+                      categoryColors[event.eventType] || "bg-green-100"
+                    }`}
                   >
-                    <span className="text-7xl transition duration-300 group-hover:scale-110">
-                      {event.icon}
-                    </span>
+                    <img
+                      src={event.thumbnail}
+                      alt={event.title}
+                      className="h-full w-full object-cover"
+                    />
 
                     <span className="absolute left-4 top-4 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#174D38] shadow-sm">
-                      {event.category}
+                      {event.eventType}
                     </span>
 
                     <span className="absolute right-4 top-4 rounded-full bg-[#174D38] px-3 py-1.5 text-xs font-semibold text-white">
@@ -328,7 +299,7 @@ export default function EventsPage() {
                       {event.title}
                     </h3>
 
-                    <p className="mt-3 text-sm leading-6 text-gray-500">
+                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-gray-500">
                       {event.description}
                     </p>
 
@@ -338,15 +309,12 @@ export default function EventsPage() {
                           size={17}
                           className="shrink-0 text-[#5A966D]"
                         />
-                        {event.date}
-                      </div>
-
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <Clock
-                          size={17}
-                          className="shrink-0 text-[#5A966D]"
-                        />
-                        {event.time}
+                        {new Date(event.date).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          timeZone: "Asia/Dhaka",
+                        })}
                       </div>
 
                       <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -356,18 +324,10 @@ export default function EventsPage() {
                         />
                         {event.location}
                       </div>
-
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
-                        <Users
-                          size={17}
-                          className="shrink-0 text-[#5A966D]"
-                        />
-                        {event.volunteers} volunteer spots
-                      </div>
                     </div>
 
                     <Link
-                      href={`/events/${event.id}`}
+                      href={`/events/${event._id}`}
                       className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-[#174D38] px-5 py-3 font-semibold text-white transition hover:bg-[#236849]"
                     >
                       View Details
@@ -382,15 +342,10 @@ export default function EventsPage() {
               <div className="mb-4 flex justify-center">
                 <Search size={45} className="text-gray-300" />
               </div>
-
-              <h3 className="text-xl font-bold">
-                No Events Found
-              </h3>
-
+              <h3 className="text-xl font-bold">No Events Found</h3>
               <p className="mt-2 text-gray-500">
                 Try another search or select a different category.
               </p>
-
               <button
                 onClick={() => {
                   setSearch("");
@@ -411,16 +366,13 @@ export default function EventsPage() {
           <div className="mb-4 flex justify-center">
             <HandHeart size={45} />
           </div>
-
           <h2 className="text-3xl font-extrabold md:text-4xl">
             Have an Event Idea?
           </h2>
-
           <p className="mx-auto mt-4 max-w-xl leading-7 text-green-100">
-            Start something meaningful. Create an event and
-            invite others to make a positive impact together.
+            Start something meaningful. Create an event and invite
+            others to make a positive impact together.
           </p>
-
           <Link
             href="/create-event"
             className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 font-bold text-[#174D38] transition hover:bg-green-100"

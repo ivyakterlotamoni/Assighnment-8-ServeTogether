@@ -2,7 +2,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Heart,
   Users,
   CalendarDays,
   Leaf,
@@ -10,82 +9,26 @@ import {
   Sprout,
   HandHeart,
   MapPin,
-  Clock,
   Trees,
   Menu,
   Mail,
   Share2,
-MessageCircle,
-Send,
-
-  
-  
+  MessageCircle,
+  Send,
   Globe,
   HeartHandshake,
 } from "lucide-react";
 
-const events = [
-  {
-    id: 1,
-    category: "COMMUNITY",
-    title: "Warm Winter Clothing Drive",
-    location: "Mirpur Community Hall",
-    date: "December 14, 2026",
-    joined: "48",
-    image:
-      "https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?w=800&q=85",
-  },
-  {
-    id: 2,
-    category: "ENVIRONMENT",
-    title: "Plant a Future: 500 Trees",
-    location: "Dhaka Nature Reserve",
-    date: "December 20, 2026",
-    joined: "85",
-    image:
-      "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=85",
-  },
-  {
-    id: 3,
-    category: "CLEANUP",
-    title: "Clean Shores, Clear Minds",
-    location: "North Beach Promenade",
-    date: "January 10, 2027",
-    joined: "32",
-    image:
-      "https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=800&q=85",
-  },
-  {
-    id: 4,
-    category: "DONATION",
-    title: "Community Food Packing Day",
-    location: "Kindora Community Center",
-    date: "January 17, 2027",
-    joined: "93",
-    image:
-      "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800&q=85",
-  },
-  {
-    id: 5,
-    category: "COMMUNITY",
-    title: "Grow Together Urban Garden",
-    location: "Maple Street Gardens",
-    date: "January 24, 2027",
-    joined: "48",
-    image:
-      "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=85",
-  },
-  {
-    id: 6,
-    category: "ENVIRONMENT",
-    title: "Forest Restoration Weekend",
-    location: "Pine Hill Trailhead",
-    date: "February 7, 2027",
-    joined: "112",
-    image:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=85",
-  },
-];
+type Event = {
+  _id: string;
+  title: string;
+  description: string;
+  eventType: string;
+  thumbnail: string;
+  location: string;
+  date: string;
+  creatorEmail: string;
+};
 
 const features = [
   {
@@ -118,7 +61,23 @@ const features = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  let events: Event[] = [];
+
+  try {
+   const response = await fetch("http://localhost:8000/events?limit=6", {
+  cache: "no-store",
+});
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch events");
+    }
+
+    events = await response.json();
+  } catch (error) {
+    console.error("Event fetching error:", error);
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#F8F8F0] text-[#173F32]">
 
@@ -284,7 +243,6 @@ export default function HomePage() {
       {/* IMPACT STATISTICS */}
       <section className="bg-[#173F32] py-7 text-white">
         <div className="mx-auto grid max-w-[1400px] grid-cols-2 gap-y-7 px-5 md:grid-cols-4 md:px-10">
-
           {[
             ["248", "Total events"],
             ["4.8K", "Active volunteers"],
@@ -301,7 +259,6 @@ export default function HomePage() {
               <p className="mt-1 text-xs text-white/65">{label}</p>
             </div>
           ))}
-
         </div>
       </section>
 
@@ -358,7 +315,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* UPCOMING EVENTS */}
+      {/* UPCOMING EVENTS - REAL DATABASE DATA */}
       <section className="bg-[#EEF3E9] py-16 md:py-20">
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
 
@@ -380,57 +337,86 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {events.map((event) => (
-              <article
-                key={event.id}
-                className="group overflow-hidden rounded-xl border border-[#DCE3D8] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div
-                  className="relative h-52 overflow-hidden bg-[#DCE8DC] bg-cover bg-center"
-                  style={{ backgroundImage: `url(${event.image})` }}
+          {events.length > 0 ? (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((event) => (
+                <article
+                  key={event._id}
+                  className="group overflow-hidden rounded-xl border border-[#DCE3D8] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  <span className="absolute left-3 top-3 rounded-md bg-white px-3 py-1.5 text-[9px] font-bold uppercase tracking-wide text-[#25805D]">
-                    {event.category}
-                  </span>
-                  <span className="absolute bottom-3 left-3 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#173F32]">
-                    {event.date.split(" ")[1]?.replace(",", "")}
-                  </span>
-                </div>
-
-                <div className="p-5">
-                  <h3 className="mb-3 text-base font-semibold transition group-hover:text-[#25805D]">
-                    {event.title}
-                  </h3>
-
-                  <div className="space-y-2 text-xs text-[#87928A]">
-                    <p className="flex items-center gap-2">
-                      <MapPin size={14} />
-                      {event.location}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <CalendarDays size={14} />
-                      {event.date}
-                    </p>
-                  </div>
-
-                  <div className="mt-5 flex items-center justify-between border-t border-[#E5E9E2] pt-4">
-                    <span className="flex items-center gap-2 text-xs text-[#87928A]">
-                      <Users size={14} />
-                      {event.joined} going
+                  <div
+                    className="relative h-52 overflow-hidden bg-[#DCE8DC] bg-cover bg-center"
+                    style={{
+                      backgroundImage: `url(${event.thumbnail})`,
+                    }}
+                  >
+                    <span className="absolute left-3 top-3 rounded-md bg-white px-3 py-1.5 text-[9px] font-bold uppercase tracking-wide text-[#25805D]">
+                      {event.eventType}
                     </span>
 
-                    <Link
-                      href={`/events/${event.id}`}
-                      className="flex items-center gap-1 text-xs font-bold text-[#174D38] hover:text-[#25805D]"
-                    >
-                      View event <ArrowRight size={14} />
-                    </Link>
+                    <span className="absolute bottom-3 left-3 rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#173F32]">
+                      {new Date(event.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
+
+                  <div className="p-5">
+                    <h3 className="mb-3 text-base font-semibold transition group-hover:text-[#25805D]">
+                      {event.title}
+                    </h3>
+
+                    <div className="space-y-2 text-xs text-[#87928A]">
+                      <p className="flex items-center gap-2">
+                        <MapPin size={14} />
+                        {event.location}
+                      </p>
+
+                      <p className="flex items-center gap-2">
+                        <CalendarDays size={14} />
+                        {new Date(event.date).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between border-t border-[#E5E9E2] pt-4">
+                      <span className="flex items-center gap-2 text-xs text-[#87928A]">
+                        <Users size={14} />
+                        Community Event
+                      </span>
+
+                      <Link
+                        href={`/events/${event._id}`}
+                        className="flex items-center gap-1 text-xs font-bold text-[#174D38] hover:text-[#25805D]"
+                      >
+                        View event <ArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-[#DCE3D8] bg-white px-6 py-12 text-center">
+              <Leaf size={36} className="mx-auto mb-4 text-[#25805D]" />
+              <h3 className="text-lg font-semibold">
+                No upcoming events yet
+              </h3>
+              <p className="mt-2 text-sm text-[#87928A]">
+                New community events will appear here when they are created.
+              </p>
+              <Link
+                href="/create-event"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#174D38] px-5 py-3 text-sm font-semibold text-white hover:bg-[#103B2A]"
+              >
+                Create an event <ArrowRight size={15} />
+              </Link>
+            </div>
+          )}
 
           <div className="mt-7 text-center sm:hidden">
             <Link
