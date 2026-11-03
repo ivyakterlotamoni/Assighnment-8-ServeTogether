@@ -26,6 +26,7 @@ export default function ManageEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -92,6 +93,7 @@ export default function ManageEventsPage() {
 
   const handleEdit = (event: Event) => {
     const eventDate = new Date(event.date);
+
     const localDate = new Date(
       eventDate.getTime() - eventDate.getTimezoneOffset() * 60000
     )
@@ -163,6 +165,8 @@ export default function ManageEventsPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!session?.user?.email) return;
+
     const confirmed = window.confirm(
       "Are you sure you want to delete this event?"
     );
@@ -171,10 +175,17 @@ export default function ManageEventsPage() {
 
     setError("");
     setSuccess("");
+    setDeletingId(id);
 
     try {
       const response = await fetch(`${API_URL}/events/${id}`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          creatorEmail: session.user.email,
+        }),
       });
 
       const result = await response.json();
@@ -196,6 +207,8 @@ export default function ManageEventsPage() {
       setError(
         err instanceof Error ? err.message : "Failed to delete event."
       );
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -455,7 +468,14 @@ export default function ManageEventsPage() {
                     {event.description}
                   </p>
 
-                  <div className="mt-5 flex gap-3">
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <button
+                      onClick={() => router.push(`/events/${event._id}`)}
+                      className="flex-1 rounded-lg bg-[#174b3b] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#23634e]"
+                    >
+                      View Details
+                    </button>
+
                     <button
                       onClick={() => handleEdit(event)}
                       className="flex-1 rounded-lg border border-[#174b3b] px-3 py-2.5 text-sm font-semibold text-[#174b3b] hover:bg-[#edf4ee]"
@@ -465,9 +485,10 @@ export default function ManageEventsPage() {
 
                     <button
                       onClick={() => handleDelete(event._id)}
-                      className="flex-1 rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100"
+                      disabled={deletingId === event._id}
+                      className="flex-1 rounded-lg bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
                     >
-                      Delete
+                      {deletingId === event._id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
                 </div>
