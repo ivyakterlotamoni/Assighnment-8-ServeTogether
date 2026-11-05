@@ -1,4 +1,5 @@
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -9,7 +10,7 @@ import {
   HandHeart,
 } from "lucide-react";
 
-
+export const instant = false;
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -42,7 +43,29 @@ async function getEvent(id: string): Promise<Event | null> {
   }
 }
 
-export default async function EventDetailsPage({
+function Loading() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#F8F8F0]">
+      <p className="text-lg font-semibold text-[#174D38]">
+        Loading event details...
+      </p>
+    </main>
+  );
+}
+
+export default function EventDetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <EventDetailsContent params={params} />
+    </Suspense>
+  );
+}
+
+async function EventDetailsContent({
   params,
 }: {
   params: Promise<{ id: string }>;

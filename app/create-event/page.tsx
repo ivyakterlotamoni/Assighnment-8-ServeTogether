@@ -36,6 +36,7 @@ export default function CreateEventPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [minDate, setMinDate] = useState("");
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -43,13 +44,18 @@ export default function CreateEventPage() {
     }
   }, [session, isPending, router]);
 
-  const today = new Date();
+  // Calculate today's date after the component mounts
+  useEffect(() => {
+    const today = new Date();
 
-  const minDate = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
+    const formattedDate = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    setMinDate(formattedDate);
+  }, []);
 
   const handleSubmit = async (
     e: React.FormEvent<HTMLFormElement>
@@ -246,7 +252,7 @@ export default function CreateEventPage() {
                     id="date"
                     name="date"
                     type="datetime-local"
-                    min={`${minDate}T00:00`}
+                    min={minDate ? `${minDate}T00:00` : undefined}
                     required
                     className="h-11"
                   />

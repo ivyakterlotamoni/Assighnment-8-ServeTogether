@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,14 +9,9 @@ import {
   HandHeart,
   MapPin,
   Trees,
-  Menu,
-  Mail,
-  Share2,
-  MessageCircle,
-  Send,
-  Globe,
   HeartHandshake,
 } from "lucide-react";
+export const instant = false;
 
 type Event = {
   _id: string;
@@ -64,10 +58,13 @@ const features = [
 export default async function HomePage() {
   let events: Event[] = [];
 
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
   try {
-   const response = await fetch("http://localhost:8000/events?limit=6", {
-  cache: "no-store",
-});
+    const response = await fetch(`${API_URL}/events?limit=6`, {
+      cache: "no-store",
+    });
 
     if (!response.ok) {
       throw new Error("Failed to fetch events");
@@ -81,11 +78,8 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#F8F8F0] text-[#173F32]">
 
-     
-
       {/* HERO SECTION */}
       <section className="mx-auto grid max-w-[1400px] items-center gap-12 px-5 py-12 md:grid-cols-2 md:px-10 md:py-16 lg:gap-20 lg:py-20">
-
         <div className="order-2 md:order-1">
           <div className="mb-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[2px] text-[#25805D]">
             <span className="h-2 w-2 rounded-full bg-[#25805D]" />
@@ -268,10 +262,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* UPCOMING EVENTS - REAL DATABASE DATA */}
+      {/* UPCOMING EVENTS */}
       <section className="bg-[#EEF3E9] py-16 md:py-20">
         <div className="mx-auto max-w-[1400px] px-5 md:px-10">
-
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
               <p className="mb-3 text-[10px] font-bold uppercase tracking-[2px] text-[#25805D]">
@@ -384,7 +377,6 @@ export default async function HomePage() {
 
       {/* COMMUNITY IN ACTION */}
       <section className="mx-auto max-w-[1400px] px-5 py-16 md:px-10 md:py-24">
-
         <div className="mb-10 text-center">
           <p className="mb-3 text-[10px] font-bold uppercase tracking-[2px] text-[#25805D]">
             Community in action
@@ -398,7 +390,6 @@ export default async function HomePage() {
         </div>
 
         <div className="grid h-auto grid-cols-1 gap-3 md:h-[420px] md:grid-cols-4 md:grid-rows-2">
-
           <div
             className="min-h-[260px] rounded-xl bg-cover bg-center md:col-span-2 md:row-span-2"
             style={{
@@ -436,7 +427,6 @@ export default async function HomePage() {
       {/* NEWSLETTER */}
       <section className="mx-auto max-w-[1400px] px-5 pb-16 md:px-10 md:pb-20">
         <div className="relative grid overflow-hidden rounded-2xl bg-[#173F32] px-7 py-12 text-white md:grid-cols-2 md:items-center md:px-12 md:py-16">
-
           <div className="absolute -right-10 -top-20 h-64 w-64 rounded-full border border-white/10" />
 
           <div>
@@ -475,8 +465,6 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      
 
     </main>
   );
