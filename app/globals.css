@@ -96,3 +96,43 @@ img {
     transition-duration: 0.01ms !important;
   }
 }
+/* Dark Theme */
+html[data-theme="dark"] {
+  --forest: #8bc5a5;
+  --cream: #111c17;
+  --sage: #1d3026;
+  --amber: #e6ad68;
+  --dark: #e5eee8;
+  --muted: #a3b4a8;
+  --border: #344b3d;
+  --white: #19271f;
+  --background: #111c17;
+  --foreground: #e5eee8;
+}
+
+html[data-theme="dark"] body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .site-header {
+  background: rgba(17, 28, 23, 0.95) !important;
+  border-color: #344b3d !important;
+}
+
+html[data-theme="dark"] .site-brand-text,
+html[data-theme="dark"] .site-nav-links,
+html[data-theme="dark"] .site-email,
+html[data-theme="dark"] .site-mobile-menu,
+html[data-theme="dark"] .site-theme-toggle {
+  color: #e5eee8 !important;
+}
+
+html[data-theme="dark"] .site-theme-toggle,
+html[data-theme="dark"] .site-mobile-menu {
+  border-color: #496451 !important;
+}
+
+html[data-theme="dark"] .site-theme-toggle:hover {
+  background: #263d30 !important;
+}
